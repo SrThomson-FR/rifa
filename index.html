@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Rifa Solidaria - 100 Números</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <div class="header-content">
+    <div class="header-text">
+      <h1 id="rifaTitulo">Rifa Solidaria</h1>
+      <p id="rifaPremio">🎁 Premio Sorpresa</p>
+      <p class="precio">Precio por boleto: <span id="rifaPrecio">$10.000</span></p>
+    </div>
+    <button id="btnAdminToggle" class="btn btn-admin">🔒 Modo Admin</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="dashboard">🎟️ Boletos</button>
+  <button class="tab-btn" data-tab="sorteo">🏆 Sorteo</button>
+  <button class="tab-btn hidden" data-tab="config" id="tabBtnConfig">⚙️ Configuración</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dashboard" class="tab-content active">
+    <div class="stats-bar">
+      <div class="stat-card stat-vendidos">
+        <span class="stat-num" id="statVendidos">0</span>
+        <span class="stat-label">Vendidos</span>
+      </div>
+      <div class="stat-card stat-disponibles">
+        <span class="stat-num" id="statDisponibles">100</span>
+        <span class="stat-label">Disponibles</span>
+      </div>
+      <div class="stat-card stat-pendientes">
+        <span class="stat-num" id="statPendientes">0</span>
+        <span class="stat-label">Pago pendiente</span>
+      </div>
+      <div class="stat-card stat-recaudado">
+        <span class="stat-num" id="statRecaudado">$0</span>
+        <span class="stat-label">Recaudado (pagado)</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="dot dot-disponible"></span> Disponible</span>
+      <span class="legend-item"><span class="dot dot-vendido"></span> Vendido</span>
+      <span class="legend-item"><span class="dot dot-pendiente"></span> Vendido (pago pendiente)</span>
+    </div>
+
+    <div id="grid" class="grid"></div>
+  </section>
+
+  <!-- SORTEO -->
+  <section id="tab-sorteo" class="tab-content">
+    <div class="sorteo-box">
+      <h2>🎉 Sorteo de la Rifa</h2>
+      <p class="sorteo-info">El ganador se elegirá al azar entre todos los números vendidos.</p>
+      <button id="btnSortear" class="btn btn-sortear">🎲 ¡Sortear Ganador!</button>
+
+      <div id="sorteoResultado" class="sorteo-resultado hidden">
+        <div class="confetti-num" id="numeroGanador">--</div>
+        <p class="ganador-label">¡Número Ganador!</p>
+        <div class="ganador-datos">
+          <p><strong id="ganadorNombre"></strong></p>
+          <p id="ganadorTelefono"></p>
+        </div>
+      </div>
+
+      <div id="sorteoVacio" class="sorteo-vacio">
+        <p>Aún no hay boletos vendidos para sortear.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONFIG -->
+  <section id="tab-config" class="tab-content">
+    <div class="config-box">
+      <h2>⚙️ Configuración de la Rifa</h2>
+
+      <div class="config-fields" id="configFields">
+        <label>Título de la rifa
+          <input type="text" id="inputTitulo" maxlength="60" />
+        </label>
+        <label>Premio
+          <input type="text" id="inputPremio" maxlength="80" />
+        </label>
+        <label>Precio por boleto ($)
+          <input type="number" id="inputPrecio" min="0" step="1" />
+        </label>
+        <button id="btnGuardarConfig" class="btn btn-guardar">💾 Guardar Cambios</button>
+
+        <hr />
+
+        <h3>Gestión de datos</h3>
+        <div class="config-actions">
+          <button id="btnExportar" class="btn btn-exportar">⬇️ Exportar Compradores (CSV)</button>
+          <button id="btnDatosPrueba" class="btn btn-editar">🧪 Cargar Datos de Prueba (83)</button>
+          <button id="btnReiniciar" class="btn btn-reiniciar">🗑️ Reiniciar Rifa Completa</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODAL: Vender / Ver / Editar boleto -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <h2 id="modalTitulo">Número <span id="modalNumero"></span></h2>
+
+    <div id="modalVenderForm" class="modal-form hidden">
+      <label>Nombre del comprador
+        <input type="text" id="inputNombre" placeholder="Nombre completo" maxlength="60" />
+      </label>
+      <label>Teléfono
+        <input type="tel" id="inputTelefono" placeholder="Ej: 3001234567" maxlength="20" />
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="inputPagado" />
+        Pago confirmado
+      </label>
+      <p class="error-msg hidden" id="errorMsg">Por favor completa nombre y teléfono.</p>
+      <button id="btnGuardarVenta" class="btn btn-guardar">✅ Confirmar Venta</button>
+    </div>
+
+    <div id="modalVerForm" class="modal-form hidden">
+      <label>Nombre del comprador
+        <input type="text" id="verNombre" disabled />
+      </label>
+      <label>Teléfono
+        <input type="tel" id="verTelefono" disabled />
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="verPagado" disabled />
+        Pago confirmado
+      </label>
+      <div class="modal-actions">
+        <button id="btnEditar" class="btn btn-editar">✏️ Editar</button>
+        <button id="btnGuardarEdicion" class="btn btn-guardar hidden">💾 Guardar</button>
+        <button id="btnLiberar" class="btn btn-liberar">🚫 Liberar Número</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PIN Admin -->
+<div id="pinOverlay" class="modal-overlay hidden">
+  <div class="modal modal-pin">
+    <button class="modal-close" id="pinClose">✕</button>
+    <h2>🔒 Modo Administrador</h2>
+    <p>Ingresa el PIN para activar el modo admin.</p>
+    <input type="password" id="inputPin" placeholder="PIN" maxlength="10" inputmode="numeric" />
+    <p class="error-msg hidden" id="pinError">PIN incorrecto.</p>
+    <button id="btnConfirmarPin" class="btn btn-guardar">Ingresar</button>
+  </div>
+</div>
+
+<!-- Toast de notificación -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
