@@ -1,25 +1,21 @@
+/* ==========================================================
+   DATOS DE LA RIFA — cambia aquí los valores si lo necesitas
+   ========================================================== */
+const PRECIO_BOLETO = 10000;   // valor de cada número
+/* ========================================================== */
+
 const STORAGE_KEY = 'rifa100_boletos';
-const CONFIG_KEY = 'rifa100_config';
-const ADMIN_PIN = '2026';
 
 let boletos = {};
-let config = { titulo: 'Rifa Solidaria', premio: '🎁 Premio Sorpresa', precio: 10000 };
-let isAdmin = false;
 let numeroActivo = null;
 
 function cargarDatos() {
   const raw = localStorage.getItem(STORAGE_KEY);
   boletos = raw ? JSON.parse(raw) : {};
-  const rawConfig = localStorage.getItem(CONFIG_KEY);
-  if (rawConfig) config = { ...config, ...JSON.parse(rawConfig) };
 }
 
 function guardarBoletos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(boletos));
-}
-
-function guardarConfig() {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
 }
 
 function formatoDinero(valor) {
@@ -27,7 +23,7 @@ function formatoDinero(valor) {
 }
 
 function formatoNumero(num) {
-  return String(num).padStart(3, '0');
+  return String(num).padStart(2, '0');
 }
 
 function mostrarToast(msg) {
@@ -40,44 +36,41 @@ function mostrarToast(msg) {
 
 /* ---------- RENDER ---------- */
 
-function renderConfigTexto() {
-  document.getElementById('rifaTitulo').textContent = config.titulo;
-  document.getElementById('rifaPremio').textContent = config.premio;
-  document.getElementById('rifaPrecio').textContent = formatoDinero(config.precio);
-}
-
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   let vendidos = 0, recaudado = 0, pendientes = 0;
 
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 0; i <= 99; i++) {
     const b = boletos[i];
     const btn = document.createElement('button');
     btn.className = 'numero';
-    btn.textContent = formatoNumero(i);
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'numero-txt';
+    etiqueta.textContent = formatoNumero(i);
+    btn.appendChild(etiqueta);
 
     if (b) {
       vendidos++;
       if (b.pagado) {
         btn.classList.add('vendido');
-        recaudado += Number(config.precio) || 0;
+        recaudado += PRECIO_BOLETO;
       } else {
         btn.classList.add('pendiente');
         pendientes++;
       }
-    } else {
-      btn.classList.add('disponible');
     }
 
     btn.addEventListener('click', () => abrirModalNumero(i));
     grid.appendChild(btn);
   }
 
+  const disponibles = 100 - vendidos;
   document.getElementById('statVendidos').textContent = vendidos;
-  document.getElementById('statDisponibles').textContent = 100 - vendidos;
+  document.getElementById('statDisponibles').textContent = disponibles;
   document.getElementById('statPendientes').textContent = pendientes;
   document.getElementById('statRecaudado').textContent = formatoDinero(recaudado);
+  document.getElementById('badgeDisponibles').textContent = disponibles;
 }
 
 /* ---------- MODAL VENTA / VER ---------- */
@@ -144,8 +137,9 @@ function guardarVenta() {
   };
   guardarBoletos();
   renderGrid();
+  const num = formatoNumero(numeroActivo);
   cerrarModal();
-  mostrarToast(`✅ Número ${formatoNumero(numeroActivo)} vendido con éxito`);
+  mostrarToast(`✅ Número ${num} vendido con éxito`);
 }
 
 function guardarEdicion() {
@@ -167,97 +161,61 @@ function guardarEdicion() {
 }
 
 function liberarNumero() {
-  if (!isAdmin) {
-    mostrarToast('🔒 Activa el modo Admin para liberar un número');
-    return;
-  }
   if (!confirm(`¿Seguro que deseas liberar el número ${formatoNumero(numeroActivo)}? Esto borrará los datos del comprador.`)) return;
   delete boletos[numeroActivo];
   guardarBoletos();
   renderGrid();
+  const num = formatoNumero(numeroActivo);
   cerrarModal();
-  mostrarToast(`🚫 Número ${formatoNumero(numeroActivo)} liberado`);
+  mostrarToast(`🚫 Número ${num} liberado`);
 }
 
 /* ---------- SORTEO ---------- */
 
-function sortear() {
-  const vendidos = Object.keys(boletos);
-  if (vendidos.length === 0) {
-    document.getElementById('sorteoVacio').classList.remove('hidden');
-    document.getElementById('sorteoResultado').classList.add('hidden');
+function buscarGanador() {
+  const valor = document.getElementById('inputGanador').value.trim();
+  const num = Number(valor);
+  const error = document.getElementById('errorSorteo');
+  const resultado = document.getElementById('sorteoResultado');
+
+  if (valor === '' || !Number.isInteger(num) || num < 0 || num > 99) {
+    error.classList.remove('hidden');
+    resultado.classList.add('hidden');
     return;
   }
-  const ganador = vendidos[Math.floor(Math.random() * vendidos.length)];
-  const datos = boletos[ganador];
+  error.classList.add('hidden');
 
-  document.getElementById('sorteoVacio').classList.add('hidden');
-  document.getElementById('numeroGanador').textContent = formatoNumero(ganador);
-  document.getElementById('ganadorNombre').textContent = datos.nombre;
-  document.getElementById('ganadorTelefono').textContent = '📞 ' + datos.telefono;
+  const datos = boletos[num];
+  document.getElementById('numeroGanador').textContent = formatoNumero(num);
 
-  const resultado = document.getElementById('sorteoResultado');
+  const bloqueDatos = document.getElementById('ganadorDatos');
+  const noVendido = document.getElementById('ganadorNoVendido');
+  const label = document.getElementById('ganadorLabel');
+
+  if (datos) {
+    label.textContent = '🎉 ¡Tenemos Ganador!';
+    bloqueDatos.classList.remove('hidden');
+    noVendido.classList.add('hidden');
+    document.getElementById('ganadorNombre').textContent = datos.nombre;
+    document.getElementById('ganadorTelefono').textContent = '📞 ' + datos.telefono;
+  } else {
+    label.textContent = 'Número no vendido';
+    bloqueDatos.classList.add('hidden');
+    noVendido.classList.remove('hidden');
+    document.getElementById('ganadorNombre').textContent = '';
+    document.getElementById('ganadorTelefono').textContent = '';
+  }
+
   resultado.classList.remove('hidden');
   resultado.style.animation = 'none';
   requestAnimationFrame(() => { resultado.style.animation = ''; });
 }
 
-/* ---------- ADMIN ---------- */
-
-function actualizarUIAdmin() {
-  const btns = [document.getElementById('btnAdminToggle')];
-  btns.forEach(b => {
-    b.textContent = isAdmin ? '🔓 Admin Activo' : '🔒 Modo Admin';
-    b.classList.toggle('btn-guardar', isAdmin);
-  });
-  document.getElementById('tabBtnConfig').classList.toggle('hidden', !isAdmin);
-  if (!isAdmin) cambiarTab('dashboard');
-}
-
-function abrirModalPin() {
-  document.getElementById('pinError').classList.add('hidden');
-  document.getElementById('inputPin').value = '';
-  document.getElementById('pinOverlay').classList.remove('hidden');
-}
-
-function cerrarModalPin() {
-  document.getElementById('pinOverlay').classList.add('hidden');
-}
-
-function confirmarPin() {
-  const val = document.getElementById('inputPin').value.trim();
-  if (val === ADMIN_PIN) {
-    isAdmin = true;
-    actualizarUIAdmin();
-    cerrarModalPin();
-    mostrarToast('🔓 Modo Admin activado');
-  } else {
-    document.getElementById('pinError').classList.remove('hidden');
-  }
-}
-
-/* ---------- CONFIG ---------- */
-
-function cargarConfigForm() {
-  document.getElementById('inputTitulo').value = config.titulo;
-  document.getElementById('inputPremio').value = config.premio;
-  document.getElementById('inputPrecio').value = config.precio;
-}
-
-function guardarConfigForm() {
-  const titulo = document.getElementById('inputTitulo').value.trim() || config.titulo;
-  const premio = document.getElementById('inputPremio').value.trim() || config.premio;
-  const precio = Number(document.getElementById('inputPrecio').value) || 0;
-  config = { titulo, premio, precio };
-  guardarConfig();
-  renderConfigTexto();
-  renderGrid();
-  mostrarToast('💾 Configuración guardada');
-}
+/* ---------- GESTIÓN DE DATOS ---------- */
 
 function exportarCSV() {
   const filas = [['Número', 'Nombre', 'Teléfono', 'Pagado']];
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 0; i <= 99; i++) {
     const b = boletos[i];
     if (b) filas.push([formatoNumero(i), b.nombre, b.telefono, b.pagado ? 'Sí' : 'No']);
   }
@@ -291,24 +249,22 @@ function generarTelefonoPrueba() {
 }
 
 function cargarDatosPrueba() {
-  if (!confirm('Esto cargará 83 boletos de prueba con datos aleatorios (algunos ya vendidos serán omitidos). ¿Continuar?')) return;
+  if (!confirm('Esto cargará 83 boletos de prueba con datos aleatorios. ¿Continuar?')) return;
 
   const disponibles = [];
-  for (let i = 1; i <= 100; i++) {
+  for (let i = 0; i <= 99; i++) {
     if (!boletos[i]) disponibles.push(i);
   }
 
-  const cantidad = Math.min(83, disponibles.length);
   for (let j = 0; j < disponibles.length; j++) {
     const k = Math.floor(Math.random() * disponibles.length);
     [disponibles[j], disponibles[k]] = [disponibles[k], disponibles[j]];
   }
 
-  const seleccionados = disponibles.slice(0, cantidad);
-  seleccionados.forEach((num, idx) => {
-    const nombre = NOMBRES_PRUEBA[idx % NOMBRES_PRUEBA.length];
+  const cantidad = Math.min(83, disponibles.length);
+  disponibles.slice(0, cantidad).forEach((num, idx) => {
     boletos[num] = {
-      nombre,
+      nombre: NOMBRES_PRUEBA[idx % NOMBRES_PRUEBA.length],
       telefono: generarTelefonoPrueba(),
       pagado: Math.random() < 0.7
     };
@@ -339,10 +295,7 @@ function cambiarTab(tab) {
 
 function init() {
   cargarDatos();
-  renderConfigTexto();
   renderGrid();
-  cargarConfigForm();
-  actualizarUIAdmin();
 
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => cambiarTab(btn.dataset.tab));
@@ -357,27 +310,11 @@ function init() {
   document.getElementById('btnGuardarEdicion').addEventListener('click', guardarEdicion);
   document.getElementById('btnLiberar').addEventListener('click', liberarNumero);
 
-  document.getElementById('btnSortear').addEventListener('click', sortear);
-
-  document.getElementById('btnAdminToggle').addEventListener('click', () => {
-    if (isAdmin) {
-      isAdmin = false;
-      actualizarUIAdmin();
-      mostrarToast('🔒 Modo Admin desactivado');
-    } else {
-      abrirModalPin();
-    }
-  });
-  document.getElementById('pinClose').addEventListener('click', cerrarModalPin);
-  document.getElementById('pinOverlay').addEventListener('click', (e) => {
-    if (e.target.id === 'pinOverlay') cerrarModalPin();
-  });
-  document.getElementById('btnConfirmarPin').addEventListener('click', confirmarPin);
-  document.getElementById('inputPin').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') confirmarPin();
+  document.getElementById('btnBuscarGanador').addEventListener('click', buscarGanador);
+  document.getElementById('inputGanador').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') buscarGanador();
   });
 
-  document.getElementById('btnGuardarConfig').addEventListener('click', guardarConfigForm);
   document.getElementById('btnExportar').addEventListener('click', exportarCSV);
   document.getElementById('btnDatosPrueba').addEventListener('click', cargarDatosPrueba);
   document.getElementById('btnReiniciar').addEventListener('click', reiniciarRifa);
