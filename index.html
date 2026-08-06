@@ -3,26 +3,49 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Rifa Solidaria - 100 Números</title>
+<title>Gran Rifa - 100 Números</title>
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<header class="app-header">
-  <div class="header-content">
-    <div class="header-text">
-      <h1 id="rifaTitulo">Rifa Solidaria</h1>
-      <p id="rifaPremio">🎁 Premio Sorpresa</p>
-      <p class="precio">Precio por boleto: <span id="rifaPrecio">$10.000</span></p>
+<!-- ================= ENCABEZADO ================= -->
+<header class="hero">
+  <div class="hero-inner">
+
+    <div class="hero-top">
+      <div class="ticket-badge">
+        <span class="ticket-stars">★ ★ ★ ★</span>
+        <span class="ticket-num" id="badgeDisponibles">100</span>
+        <span class="ticket-txt">NÚMEROS<br />DISPONIBLES</span>
+        <span class="ticket-stars">★ ★ ★ ★</span>
+      </div>
+
+      <div class="hero-title-block">
+        <h1 class="hero-title">
+          <span class="t-rosa">GRAN</span> <span class="t-negro">RIFA</span>
+        </h1>
+        <div class="hero-tagline">TU NÚMERO, TU SUERTE! ♡</div>
+      </div>
+
+      <div class="premio-badge">
+        <span class="premio-label">PREMIO</span>
+        <span class="premio-monto">$100.000</span>
+        <span class="premio-sub">EN EFECTIVO</span>
+      </div>
     </div>
-    <button id="btnAdminToggle" class="btn btn-admin">🔒 Modo Admin</button>
+
+    <div class="valor-bar">
+      <span class="valor-label">VALOR DEL NÚMERO:</span>
+      <span class="valor-monto">$10.000</span>
+    </div>
   </div>
 </header>
 
+<!-- ================= PESTAÑAS ================= -->
 <nav class="tabs">
   <button class="tab-btn active" data-tab="dashboard">🎟️ Boletos</button>
   <button class="tab-btn" data-tab="sorteo">🏆 Sorteo</button>
-  <button class="tab-btn hidden" data-tab="config" id="tabBtnConfig">⚙️ Configuración</button>
+  <button class="tab-btn" data-tab="config">⚙️ Configuración</button>
 </nav>
 
 <main>
@@ -44,37 +67,46 @@
       </div>
       <div class="stat-card stat-recaudado">
         <span class="stat-num" id="statRecaudado">$0</span>
-        <span class="stat-label">Recaudado (pagado)</span>
+        <span class="stat-label">Recaudado</span>
       </div>
     </div>
 
     <div class="legend">
       <span class="legend-item"><span class="dot dot-disponible"></span> Disponible</span>
-      <span class="legend-item"><span class="dot dot-vendido"></span> Vendido</span>
-      <span class="legend-item"><span class="dot dot-pendiente"></span> Vendido (pago pendiente)</span>
+      <span class="legend-item"><span class="dot dot-vendido"></span> Vendido y pagado</span>
+      <span class="legend-item"><span class="dot dot-pendiente"></span> Pago pendiente</span>
     </div>
 
-    <div id="grid" class="grid"></div>
+    <div class="grid-frame">
+      <div id="grid" class="grid"></div>
+    </div>
   </section>
 
   <!-- SORTEO -->
   <section id="tab-sorteo" class="tab-content">
     <div class="sorteo-box">
-      <h2>🎉 Sorteo de la Rifa</h2>
-      <p class="sorteo-info">El ganador se elegirá al azar entre todos los números vendidos.</p>
-      <button id="btnSortear" class="btn btn-sortear">🎲 ¡Sortear Ganador!</button>
+      <h2>🏆 Resultado del Sorteo</h2>
+      <p class="sorteo-info">
+        Gana quien tenga las <strong>2 últimas cifras</strong> del premio mayor de la
+        <strong>Lotería del Cauca</strong> del <strong>29 de agosto de 2026</strong>.
+      </p>
+
+      <div class="sorteo-input-row">
+        <input type="number" id="inputGanador" min="0" max="99" placeholder="00" inputmode="numeric" />
+        <button id="btnBuscarGanador" class="btn btn-sortear">🎯 Ver Ganador</button>
+      </div>
+      <p class="error-msg hidden" id="errorSorteo">Ingresa un número entre 00 y 99.</p>
 
       <div id="sorteoResultado" class="sorteo-resultado hidden">
         <div class="confetti-num" id="numeroGanador">--</div>
-        <p class="ganador-label">¡Número Ganador!</p>
-        <div class="ganador-datos">
+        <p class="ganador-label" id="ganadorLabel">¡Número Ganador!</p>
+        <div class="ganador-datos" id="ganadorDatos">
           <p><strong id="ganadorNombre"></strong></p>
           <p id="ganadorTelefono"></p>
         </div>
-      </div>
-
-      <div id="sorteoVacio" class="sorteo-vacio">
-        <p>Aún no hay boletos vendidos para sortear.</p>
+        <p class="ganador-novendido hidden" id="ganadorNoVendido">
+          Este número no fue vendido.
+        </p>
       </div>
     </div>
   </section>
@@ -82,33 +114,57 @@
   <!-- CONFIG -->
   <section id="tab-config" class="tab-content">
     <div class="config-box">
-      <h2>⚙️ Configuración de la Rifa</h2>
-
-      <div class="config-fields" id="configFields">
-        <label>Título de la rifa
-          <input type="text" id="inputTitulo" maxlength="60" />
-        </label>
-        <label>Premio
-          <input type="text" id="inputPremio" maxlength="80" />
-        </label>
-        <label>Precio por boleto ($)
-          <input type="number" id="inputPrecio" min="0" step="1" />
-        </label>
-        <button id="btnGuardarConfig" class="btn btn-guardar">💾 Guardar Cambios</button>
-
-        <hr />
-
-        <h3>Gestión de datos</h3>
-        <div class="config-actions">
-          <button id="btnExportar" class="btn btn-exportar">⬇️ Exportar Compradores (CSV)</button>
-          <button id="btnDatosPrueba" class="btn btn-editar">🧪 Cargar Datos de Prueba (83)</button>
-          <button id="btnReiniciar" class="btn btn-reiniciar">🗑️ Reiniciar Rifa Completa</button>
-        </div>
+      <h2>⚙️ Gestión de datos</h2>
+      <p class="config-nota">
+        El nombre de la rifa, el premio, el precio y los datos del sorteo se cambian
+        en las constantes del inicio del archivo <code>app.js</code>.
+      </p>
+      <div class="config-actions">
+        <button id="btnExportar" class="btn btn-exportar">⬇️ Exportar Compradores (CSV)</button>
+        <button id="btnDatosPrueba" class="btn btn-editar">🧪 Cargar Datos de Prueba (83)</button>
+        <button id="btnReiniciar" class="btn btn-reiniciar">🗑️ Reiniciar Rifa Completa</button>
       </div>
     </div>
   </section>
 
 </main>
+
+<!-- ================= PIE ================= -->
+<footer class="pie">
+  <div class="pie-grid">
+    <div class="pie-item">
+      <span class="pie-icon">📅</span>
+      <div>
+        <span class="pie-titulo">FECHA DEL SORTEO</span>
+        <span class="pie-dato">29 DE AGOSTO DE 2026</span>
+      </div>
+    </div>
+    <div class="pie-item">
+      <span class="pie-icon">🏆</span>
+      <div>
+        <span class="pie-titulo">JUEGA CON LA</span>
+        <span class="pie-dato">LOTERÍA DEL CAUCA</span>
+        <span class="pie-extra">2 últimas cifras</span>
+      </div>
+    </div>
+    <div class="pie-item">
+      <span class="pie-icon">💵</span>
+      <div>
+        <span class="pie-titulo">PREMIO</span>
+        <span class="pie-dato pie-premio">$100.000</span>
+        <span class="pie-extra">EN EFECTIVO</span>
+      </div>
+    </div>
+    <div class="pie-item">
+      <span class="pie-icon">📣</span>
+      <div>
+        <span class="pie-dato">¡SUEÑA, JUEGA</span>
+        <span class="pie-dato">Y GANA!</span>
+      </div>
+    </div>
+  </div>
+  <div class="pie-strip">➜ ELIGE TU NÚMERO Y PARTICIPA! ♡</div>
+</footer>
 
 <!-- MODAL: Vender / Ver / Editar boleto -->
 <div id="modalOverlay" class="modal-overlay hidden">
@@ -151,19 +207,6 @@
   </div>
 </div>
 
-<!-- MODAL: PIN Admin -->
-<div id="pinOverlay" class="modal-overlay hidden">
-  <div class="modal modal-pin">
-    <button class="modal-close" id="pinClose">✕</button>
-    <h2>🔒 Modo Administrador</h2>
-    <p>Ingresa el PIN para activar el modo admin.</p>
-    <input type="password" id="inputPin" placeholder="PIN" maxlength="10" inputmode="numeric" />
-    <p class="error-msg hidden" id="pinError">PIN incorrecto.</p>
-    <button id="btnConfirmarPin" class="btn btn-guardar">Ingresar</button>
-  </div>
-</div>
-
-<!-- Toast de notificación -->
 <div id="toast" class="toast hidden"></div>
 
 <script src="app.js"></script>
